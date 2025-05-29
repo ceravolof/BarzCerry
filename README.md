@@ -1,83 +1,48 @@
-# 🍒 BarzCerry - Bot Telegram per Barzellette
+# 🍒 BarzCerry - Bot Telegram Semplice
 
-BarzCerry è il bot Telegram più dolce per barzellette! Racconta barzellette divertenti in tre categorie: carabinieri, scuola e animali.
+Il bot delle barzellette più dolce e semplice di Telegram!
 
-## ✨ Funzionalità
+## 🚀 Comandi
 
-- `/start` - Messaggio di benvenuto
-- `/barz` - Barzelletta casuale con bottoni interattivi
+- `/start` - Benvenuto
+- `/barz` - Barzelletta casuale  
 - `/carabinieri` - Barzellette sui carabinieri
 - `/scuola` - Barzellette sulla scuola
 - `/animali` - Barzellette sugli animali
-- `/help` - Mostra i comandi disponibili
+- `/help` - Aiuto
 
-## 🚀 Setup e Deploy su Render
+## 📦 Deploy su Render (SUPER FACILE!)
 
-### 1. Crea il Bot Telegram
-1. Vai su [@BotFather](https://t.me/botfather) su Telegram
-2. Invia `/newbot`
-3. Scegli un nome e username per il bot
-4. Salva il **token** che ricevi
+### 1. Crea BarzCerry
+1. Vai su [@BotFather](https://t.me/botfather)
+2. `/newbot`
+3. Nome: `BarzCerry`
+4. Username: `BarzCerryBot`
+5. Copia il **token**
 
-### 2. Prepara il Repository
-1. Crea un nuovo repository su GitHub
-2. Carica tutti i file del progetto
-
-### 3. Deploy su Render
-1. Vai su [render.com](https://render.com) e registrati
-2. Collega il tuo account GitHub
-3. Crea un nuovo "Web Service"
-4. Seleziona il repository del bot
-5. Configura:
-   - **Name**: telegram-joke-bot (BarzCerry)
-   - **Environment**: Python 3
+### 2. Deploy su Render
+1. Vai su [render.com](https://render.com)
+2. "New +" → "Web Service"
+3. Connetti GitHub e seleziona questo repo
+4. Impostazioni:
+   - **Name**: `barzcerry`
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `python bot.py`
 
-### 4. Configura le Variabili d'Ambiente
-Aggiungi queste variabili in Render:
-- `TELEGRAM_BOT_TOKEN`: Il token del tuo bot
-- `WEBHOOK_URL`: L'URL del tuo servizio Render (es: https://telegram-joke-bot.onrender.com)
-- `PORT`: 10000 (già configurato)
+### 3. Aggiungi Token
+Nelle "Environment Variables" aggiungi:
+- **Key**: `TELEGRAM_BOT_TOKEN`
+- **Value**: Il token da BotFather
 
-### 5. Test
-Dopo il deploy, cerca il tuo bot su Telegram e prova i comandi!
+### 4. Deploy!
+Clicca "Deploy" e aspetta. BarzCerry sarà pronto! 🍒
 
-## 🛠️ Sviluppo Locale
+## 🔧 Test Locale
 
 ```bash
-# Installa le dipendenze
 pip install -r requirements.txt
-
-# Crea file .env con il token
-echo "TELEGRAM_BOT_TOKEN=tuo_token_qui" > .env
-
-# Avvia il bot
+export TELEGRAM_BOT_TOKEN="tuo_token"
 python bot.py
 ```
 
-## 📁 Struttura del Progetto
-
-```
-telegram-joke-bot/
-├── bot.py              # Codice principale del bot
-├── jokes.json          # Database delle barzellette
-├── requirements.txt    # Dipendenze Python
-├── render.yaml        # Configurazione Render
-├── README.md          # Questo file
-└── .env              # Variabili d'ambiente (locale)
-```
-
-## 🔧 Personalizzazione
-
-Per aggiungere nuove categorie di barzellette:
-1. Modifica `jokes.json` aggiungendo la nuova categoria
-2. Aggiungi il comando nel file `bot.py`
-3. Aggiorna i bottoni inline se necessario
-
-## 📝 Note
-
-- Il bot usa webhook in produzione su Render
-- In sviluppo locale usa polling
-- Le barzellette sono salvate in JSON per facilità di modifica
-- Gestione errori robusta e logging inclusi
+Fatto! Super semplice! 🍒😄

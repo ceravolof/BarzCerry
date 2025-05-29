@@ -2,8 +2,8 @@ import logging
 import random
 import json
 import os
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram import Update
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 # Configurazione logging
 logging.basicConfig(
@@ -12,193 +12,105 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-class JokeBot:
-    def __init__(self):
-        self.jokes = self.load_jokes()
-    
-    def load_jokes(self):
-        """Carica le barzellette dal file JSON"""
-        try:
-            with open('jokes.json', 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            logger.error("File jokes.json non trovato!")
-            return {"carabinieri": [], "scuola": [], "animali": []}
-    
-    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Comando /start"""
-        welcome_message = """
-🍒 **Benvenuto in BarzCerry!** 🍒
+# Barzellette integrate nel codice
+JOKES = {
+    "carabinieri": [
+        "Due carabinieri si trovano su una barca che sta affondando. Uno dice all'altro: 'Che facciamo?' E l'altro: 'Semplice, spegniamo il motore!'",
+        "Un carabiniere va dal dottore e dice: 'Dottore, ho l'influenza!' Il dottore: 'Da quanto tempo?' Il carabiniere: 'Da quando sono nato!'",
+        "Perché i carabinieri non usano l'aspirina? Perché non riescono a farla entrare nella bottiglia!",
+        "Un carabiniere trova una bottiglia sulla spiaggia. La strofina ed esce un genio che gli dice: 'Esprimi tre desideri!' Il carabiniere: 'Vorrei essere intelligente!' Il genio: 'Fatto! Ora hai due desideri!'",
+        "Due carabinieri guardano le impronte sulla neve. Uno dice: 'Sono di lupo!' L'altro: 'No, di orso!' Arriva il maresciallo: 'Ma cosa fate?' 'Seguiamo le impronte!' 'Ma quelle sono le vostre!'"
+    ],
+    "scuola": [
+        "La maestra chiede: 'Pierino, dimmi una frase con il predicato nominale.' Pierino: 'Maestra, il cane abbaia.' La maestra: 'No Pierino, quello è predicato verbale!' Pierino: 'Ah, allora: il cane si chiama Fido!'",
+        "La professoressa di geografia chiede: 'Dove si trova l'America?' Pierino: 'A pagina 35!'",
+        "Pierino torna a casa con la pagella. Il papà: 'Pierino, hai preso 2 in matematica!' Pierino: 'Papà, non è colpa mia, la maestra mi ha chiesto quanto fa 3x3 e io ho risposto 9!' 'Ma è giusto!' 'Eh, ma poi mi ha chiesto quanto fa 9x9!'",
+        "'Pierino, coniuga il verbo camminare.' 'Io cammino, tu cammini, egli cammina...' 'Più veloce!' 'Io corro, tu corri, egli corre!'",
+        "La maestra: 'Pierino, dimmi il nome di cinque cose che contengono latte.' Pierino: 'Il formaggio, il burro, il gelato e... e... due mucche!'"
+    ],
+    "animali": [
+        "Cosa dice un pesce quando sbatte contro il muro? DIGA!",
+        "Perché i pesci non giocano a tennis? Perché hanno paura della rete!",
+        "Due pulci escono dal cinema. Una dice all'altra: 'Andiamo a piedi o prendiamo un cane?'",
+        "Cosa fa un gatto in un negozio di computer? Caccia i mouse!",
+        "Perché le api hanno i capelli appiccicosi? Perché usano il miele gel!",
+        "Un pesce va dallo psicologo e dice: 'Dottore, credo di avere un complesso!' Il dottore: 'Quale?' Il pesce: 'Quello di Nemo!'",
+        "Due gatti si incontrano. Uno dice: 'Miao!' L'altro: 'Bau!' Il primo: 'Ma sei impazzito?' Il secondo: 'No, sto studiando le lingue straniere!'"
+    ]
+}
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Comando /start"""
+    welcome_message = """🍒 **Benvenuto in BarzCerry!** 🍒
 
 Il bot delle barzellette più dolce di Telegram!
 
 Comandi disponibili:
-• `/barz` - Barzelletta casuale
-• `/carabinieri` - Barzelletta sui carabinieri
-• `/scuola` - Barzelletta sulla scuola  
-• `/animali` - Barzelletta sugli animali
-• `/help` - Mostra questo messaggio
+• /barz - Barzelletta casuale
+• /carabinieri - Barzelletta sui carabinieri  
+• /scuola - Barzelletta sulla scuola
+• /animali - Barzelletta sugli animali
+• /help - Mostra questo messaggio
 
-Divertiticon BarzCerry! 😄🍒
-        """
-        await update.message.reply_text(welcome_message, parse_mode='Markdown')
+Divertiti con BarzCerry! 😄🍒"""
     
-    async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Comando /help"""
-        await self.start(update, context)
+    await update.message.reply_text(welcome_message, parse_mode='Markdown')
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Comando /help"""
+    await start(update, context)
+
+async def get_random_joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Comando /barz - barzelletta casuale"""
+    # Scegli categoria casuale
+    category = random.choice(list(JOKES.keys()))
+    joke = random.choice(JOKES[category])
     
-    async def random_joke(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Comando /barz - barzelletta casuale"""
-        categories = list(self.jokes.keys())
-        if not categories:
-            await update.message.reply_text("❌ Nessuna barzelletta disponibile!")
-            return
-        
-        # Scegli categoria casuale
-        category = random.choice(categories)
-        joke = self.get_joke_from_category(category)
-        
-        if joke:
-            # Crea keyboard inline per altre barzellette
-            keyboard = [
-                [InlineKeyboardButton("🎲 Altra barzelletta", callback_data='random')],
-                [
-                    InlineKeyboardButton("👮‍♂️ Carabinieri", callback_data='carabinieri'),
-                    InlineKeyboardButton("🎓 Scuola", callback_data='scuola'),
-                    InlineKeyboardButton("🐶 Animali", callback_data='animali')
-                ]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await update.message.reply_text(
-                f"🎭 **Categoria: {category.title()}**\n\n{joke}",
-                reply_markup=reply_markup,
-                parse_mode='Markdown'
-            )
-        else:
-            await update.message.reply_text("❌ Nessuna barzelletta trovata in questa categoria!")
-    
-    async def category_joke(self, update: Update, context: ContextTypes.DEFAULT_TYPE, category: str):
-        """Barzelletta per categoria specifica"""
-        joke = self.get_joke_from_category(category)
-        
-        if joke:
-            keyboard = [
-                [InlineKeyboardButton("🎲 Barzelletta casuale", callback_data='random')],
-                [InlineKeyboardButton(f"🔄 Altra {category}", callback_data=category)]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await update.message.reply_text(
-                f"🎭 **{category.title()}**\n\n{joke}",
-                reply_markup=reply_markup,
-                parse_mode='Markdown'
-            )
-        else:
-            await update.message.reply_text(f"❌ Nessuna barzelletta trovata per: {category}")
-    
-    def get_joke_from_category(self, category):
-        """Ottieni una barzelletta casuale dalla categoria"""
-        if category in self.jokes and self.jokes[category]:
-            return random.choice(self.jokes[category])
-        return None
-    
-    async def button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Gestisce i click sui bottoni inline"""
-        query = update.callback_query
-        await query.answer()
-        
-        category = query.data
-        
-        if category == 'random':
-            # Barzelletta casuale
-            categories = list(self.jokes.keys())
-            if categories:
-                selected_category = random.choice(categories)
-                joke = self.get_joke_from_category(selected_category)
-                
-                keyboard = [
-                    [InlineKeyboardButton("🎲 Altra barzelletta", callback_data='random')],
-                    [
-                        InlineKeyboardButton("👮‍♂️ Carabinieri", callback_data='carabinieri'),
-                        InlineKeyboardButton("🎓 Scuola", callback_data='scuola'),
-                        InlineKeyboardButton("🐶 Animali", callback_data='animali')
-                    ]
-                ]
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                
-                await query.edit_message_text(
-                    f"🎭 **Categoria: {selected_category.title()}**\n\n{joke}",
-                    reply_markup=reply_markup,
-                    parse_mode='Markdown'
-                )
-        else:
-            # Categoria specifica
-            joke = self.get_joke_from_category(category)
-            if joke:
-                keyboard = [
-                    [InlineKeyboardButton("🎲 Barzelletta casuale", callback_data='random')],
-                    [InlineKeyboardButton(f"🔄 Altra {category}", callback_data=category)]
-                ]
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                
-                await query.edit_message_text(
-                    f"🎭 **{category.title()}**\n\n{joke}",
-                    reply_markup=reply_markup,
-                    parse_mode='Markdown'
-                )
-    
-    # Handler per categorie specifiche
-    async def carabinieri_joke(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await self.category_joke(update, context, 'carabinieri')
-    
-    async def scuola_joke(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await self.category_joke(update, context, 'scuola')
-    
-    async def animali_joke(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await self.category_joke(update, context, 'animali')
+    message = f"🍒 **BarzCerry - {category.title()}**\n\n{joke}\n\n💡 Prova anche: /carabinieri /scuola /animali"
+    await update.message.reply_text(message, parse_mode='Markdown')
+
+async def carabinieri_joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Barzelletta sui carabinieri"""
+    joke = random.choice(JOKES['carabinieri'])
+    message = f"🍒 **BarzCerry - Carabinieri** 👮‍♂️\n\n{joke}\n\n🎲 Prova: /barz per una casuale!"
+    await update.message.reply_text(message, parse_mode='Markdown')
+
+async def scuola_joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Barzelletta sulla scuola"""
+    joke = random.choice(JOKES['scuola'])
+    message = f"🍒 **BarzCerry - Scuola** 🎓\n\n{joke}\n\n🎲 Prova: /barz per una casuale!"
+    await update.message.reply_text(message, parse_mode='Markdown')
+
+async def animali_joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Barzelletta sugli animali"""
+    joke = random.choice(JOKES['animali'])
+    message = f"🍒 **BarzCerry - Animali** 🐶\n\n{joke}\n\n🎲 Prova: /barz per una casuale!"
+    await update.message.reply_text(message, parse_mode='Markdown')
 
 def main():
-    """Avvia il bot"""
-    # Token del bot (da variabile d'ambiente)
+    """Avvia BarzCerry"""
+    # Token del bot
     TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
     
     if not TOKEN:
-        logger.error("TELEGRAM_BOT_TOKEN non trovato nelle variabili d'ambiente!")
+        logger.error("❌ TELEGRAM_BOT_TOKEN non trovato!")
         return
     
-    # Crea l'applicazione
+    # Crea applicazione
     application = Application.builder().token(TOKEN).build()
     
-    # Inizializza il bot
-    joke_bot = JokeBot()
+    # Aggiungi comandi
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("barz", get_random_joke))
+    application.add_handler(CommandHandler("carabinieri", carabinieri_joke))
+    application.add_handler(CommandHandler("scuola", scuola_joke))
+    application.add_handler(CommandHandler("animali", animali_joke))
     
-    # Aggiungi gli handler
-    application.add_handler(CommandHandler("start", joke_bot.start))
-    application.add_handler(CommandHandler("help", joke_bot.help_command))
-    application.add_handler(CommandHandler("barz", joke_bot.random_joke))
-    application.add_handler(CommandHandler("carabinieri", joke_bot.carabinieri_joke))
-    application.add_handler(CommandHandler("scuola", joke_bot.scuola_joke))
-    application.add_handler(CommandHandler("animali", joke_bot.animali_joke))
-    application.add_handler(CallbackQueryHandler(joke_bot.button_callback))
+    logger.info("🍒 BarzCerry è partito!")
     
-    # Avvia il bot
-    logger.info("🍒 BarzCerry avviato!")
-    
-    # Usa webhook per Render (production) o polling per sviluppo
-    PORT = int(os.getenv('PORT', 8443))
-    WEBHOOK_URL = os.getenv('WEBHOOK_URL')
-    
-    if WEBHOOK_URL:
-        # Modalità webhook (per Render)
-        application.run_webhook(
-            listen="0.0.0.0",
-            port=PORT,
-            webhook_url=f"{WEBHOOK_URL}/webhook"
-        )
-    else:
-        # Modalità polling (per sviluppo locale)
-        application.run_polling()
+    # Usa solo polling (semplice!)
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
     main()
